@@ -25,7 +25,7 @@ import (
 )
 
 var directionsAPI = &apiConfig{
-	host:            "https://maps.googleapis.com",
+	host:            "https://ditu.google.cn",
 	path:            "/maps/api/directions/json",
 	acceptsClientID: true,
 }

@@ -30,7 +30,7 @@ import (
 )
 
 var placesNearbySearchAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/place/nearbysearch/json",
 	acceptsClientID: true,
 }
@@ -154,7 +154,7 @@ type NearbySearchRequest struct {
 }
 
 var placesTextSearchAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/place/textsearch/json",
 	acceptsClientID: true,
 }
@@ -251,7 +251,7 @@ type TextSearchRequest struct {
 }
 
 var placesRadarSearchAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/place/radarsearch/json",
 	acceptsClientID: true,
 }
@@ -401,7 +401,7 @@ type AltID struct {
 }
 
 var placeDetailsAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/place/details/json",
 	acceptsClientID: true,
 }
@@ -528,7 +528,7 @@ type PlaceReviewAspect struct {
 }
 
 var placesQueryAutocompleteAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/place/queryautocomplete/json",
 	acceptsClientID: true,
 }
@@ -639,7 +639,7 @@ type AutocompleteStructuredFormatting struct {
 }
 
 var placesPlaceAutocompleteAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/place/autocomplete/json",
 	acceptsClientID: true,
 }
@@ -722,7 +722,7 @@ type PlaceAutocompleteRequest struct {
 }
 
 var placesPhotoAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/place/photo",
 	acceptsClientID: true,
 }

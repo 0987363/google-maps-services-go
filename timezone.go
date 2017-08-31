@@ -27,7 +27,7 @@ import (
 )
 
 var timezoneAPI = &apiConfig{
-	host:            "https://ditu.google.cn",
+	host:            "https://maps.druidtech.cn",
 	path:            "/maps/api/timezone/json",
 	acceptsClientID: true,
 }

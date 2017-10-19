@@ -55,24 +55,6 @@ func (c *Client) Geocode(ctx context.Context, r *GeocodingRequest) ([]GeocodingR
 		return nil, err
 	}
 
-}
-
-
-// Geocode makes a Geocoding API request
-func (c *Client) Geocode(ctx context.Context, r *GeocodingRequest) ([]GeocodingResult, error) {
-	if r.Address == "" && len(r.Components) == 0 && r.LatLng == nil {
-		return nil, errors.New("maps: address, components and LatLng are all missing")
-	}
-
-	var response struct {
-		Results []GeocodingResult `json:"results"`
-		commonResponse
-	}
-
-	if err := c.getJSON(ctx, geocodingAPI, r, &response); err != nil {
-		return nil, err
-	}
-
 	if err := response.StatusError(); err != nil {
 		return nil, err
 	}

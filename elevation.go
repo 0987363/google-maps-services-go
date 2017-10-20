@@ -26,9 +26,18 @@ import (
 )
 
 var elevationAPI = &apiConfig{
-	host:            "https://maps.druidtech.cn",
+	host:            "http://ditu.google.cn",
 	path:            "/maps/api/elevation/json",
 	acceptsClientID: true,
+}
+
+// ElevationHost Update Elevation host
+func ElevationHost(host string) {
+	if host == "" {
+		return
+	}
+
+	elevationAPI.host = host
 }
 
 // Elevation makes an Elevation API request

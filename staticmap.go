@@ -30,7 +30,7 @@ import (
 )
 
 var staticMapAPI = &apiConfig{
-	host: "https://maps.druidtech.cn",
+	host: "https://maps.googleapis.com",
 	path: "/maps/api/staticmap",
 }
 

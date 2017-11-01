@@ -26,7 +26,7 @@ import (
 )
 
 var geocodingAPI = &apiConfig{
-	host:			"https://maps.druidtech.cn",
+	host:			"https://maps.googleapis.com",
 	path:            "/maps/api/geocode/json",
 	acceptsClientID: true,
 }

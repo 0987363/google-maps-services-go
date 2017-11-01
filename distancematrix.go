@@ -27,7 +27,7 @@ import (
 )
 
 var distanceMatrixAPI = &apiConfig{
-	host:            "https://maps.druidtech.cn",
+	host:            "https://maps.googleapis.com",
 	path:            "/maps/api/distancematrix/json",
 	acceptsClientID: true,
 }

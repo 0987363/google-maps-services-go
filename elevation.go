@@ -26,7 +26,7 @@ import (
 )
 
 var elevationAPI = &apiConfig{
-	host:            "http://ditu.google.cn",
+	host:            "https://maps.googleapis.com",
 	path:            "/maps/api/elevation/json",
 	acceptsClientID: true,
 }

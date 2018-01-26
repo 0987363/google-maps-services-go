@@ -25,7 +25,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kr/pretty"
 	"golang.org/x/net/context"
 )
 
@@ -42,8 +41,7 @@ func TestGeolocation(t *testing.T) {
 
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &GeolocationRequest{}
 
 	resp, err := c.Geolocate(context.Background(), r)
@@ -85,8 +83,7 @@ func TestGeolocationError(t *testing.T) {
 
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &GeolocationRequest{}
 
 	_, err := c.Geolocate(context.Background(), r)
@@ -142,7 +139,7 @@ func TestCellTowerAndWiFiRequest(t *testing.T) {
 			`"signalStrength":-43,` +
 			`"channel":11}]}`
 		if body != expected {
-			pretty.Errorf("Body is incorrect: %v", body)
+			fmt.Errorf("Body is incorrect: %v", body)
 			failResponse("failed to parse body", w, r)
 			return
 		}
@@ -155,15 +152,14 @@ func TestCellTowerAndWiFiRequest(t *testing.T) {
 	}))
 
 	defer server.s.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.s.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 	r := &GeolocationRequest{
 		HomeMobileCountryCode: 310,
 		HomeMobileNetworkCode: 410,
 		RadioType:             RadioTypeGSM,
 		Carrier:               "Vodafone",
 		ConsiderIP:            true,
-		CellTowers: []CellTower{CellTower{
+		CellTowers: []CellTower{{
 			CellID:            42,
 			LocationAreaCode:  415,
 			MobileCountryCode: 310,
@@ -172,7 +168,7 @@ func TestCellTowerAndWiFiRequest(t *testing.T) {
 			SignalStrength:    -60,
 			TimingAdvance:     15,
 		}},
-		WiFiAccessPoints: []WiFiAccessPoint{WiFiAccessPoint{
+		WiFiAccessPoints: []WiFiAccessPoint{{
 			MACAddress:         "00:25:9c:cf:1c:ac",
 			SignalStrength:     -43,
 			Age:                0,

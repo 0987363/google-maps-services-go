@@ -45,7 +45,7 @@ type Client struct {
 // ClientOption is the type of constructor options for NewClient(...).
 type ClientOption func(*Client) error
 
-var defaultRequestsPerSecond = 10
+var defaultRequestsPerSecond = 50
 
 // NewClient constructs a new Client which can make requests to the Google Maps WebService APIs.
 func NewClient(options ...ClientOption) (*Client, error) {
@@ -73,7 +73,7 @@ func NewClient(options ...ClientOption) (*Client, error) {
 			// Wait a second for pre-filled quota to drain
 			time.Sleep(time.Second)
 			// Then, refill rateLimiter continuously
-			for _ = range time.Tick(time.Second / time.Duration(c.requestsPerSecond)) {
+			for range time.Tick(time.Second / time.Duration(c.requestsPerSecond)) {
 				c.rateLimiter <- 1
 			}
 		}()
@@ -106,6 +106,14 @@ func WithAPIKey(apiKey string) ClientOption {
 	}
 }
 
+// WithBaseURL configures a Maps API client with a custom base url
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		c.baseURL = baseURL
+		return nil
+	}
+}
+
 // WithChannel configures a Maps API client with a Channel
 func WithChannel(channel string) ClientOption {
 	return func(c *Client) error {
@@ -129,7 +137,7 @@ func WithClientIDAndSignature(clientID, signature string) ClientOption {
 }
 
 // WithRateLimit configures the rate limit for back end requests. Default is to
-// limit to 10 requests per second. A value of zero disables rate limiting.
+// limit to 50 requests per second. A value of zero disables rate limiting.
 func WithRateLimit(requestsPerSecond int) ClientOption {
 	return func(c *Client) error {
 		c.requestsPerSecond = requestsPerSecond

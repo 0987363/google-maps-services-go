@@ -596,7 +596,7 @@ type QueryAutocompleteRequest struct {
 
 // AutocompleteResponse is a response to a Query Autocomplete request.
 type AutocompleteResponse struct {
-	Predictions []AutocompletePrediction
+	Predictions []AutocompletePrediction `json:"predictions"`
 }
 
 // AutocompletePrediction represents a single Query Autocomplete result returned from the Google Places API Web Service.
@@ -692,6 +692,10 @@ func (r *PlaceAutocompleteRequest) params() url.Values {
 		q.Set("types", string(r.Types))
 	}
 
+	if r.StrictBounds {
+		q.Set("strictbounds", "true")
+	}
+
 	var cf []string
 	for c, f := range r.Components {
 		cf = append(cf, string(c)+":"+f)
@@ -703,7 +707,7 @@ func (r *PlaceAutocompleteRequest) params() url.Values {
 	return q
 }
 
-// PlaceAutocompleteRequest is the functional options struct for Query Autocomplete
+// PlaceAutocompleteRequest is the functional options struct for Place Autocomplete
 type PlaceAutocompleteRequest struct {
 	// Input is the text string on which to search. The Places service will return candidate matches based on this string and order results based on their perceived relevance.
 	Input string
@@ -719,6 +723,8 @@ type PlaceAutocompleteRequest struct {
 	Types AutocompletePlaceType
 	// Components is a grouping of places to which you would like to restrict your results. Currently, you can use components to filter by country.
 	Components map[Component]string
+	// StrictBounds return only those places that are strictly within the region defined by location and radius.
+	StrictBounds bool
 }
 
 var placesPhotoAPI = &apiConfig{

@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kr/pretty"
 	"golang.org/x/net/context"
 )
 
@@ -35,8 +34,7 @@ func TestTimezoneNevada(t *testing.T) {
 
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &TimezoneRequest{
 		Location: &LatLng{
 			Lat: 39.6034810,
@@ -60,8 +58,8 @@ func TestTimezoneNevada(t *testing.T) {
 
 	if !reflect.DeepEqual(resp, correctResponse) {
 		t.Errorf("expected %+v, was %+v", correctResponse, resp)
-		pretty.Println(resp)
-		pretty.Println(correctResponse)
+		println(resp)
+		println(correctResponse)
 	}
 }
 
@@ -95,8 +93,7 @@ func TestTimezoneWithCancelledContext(t *testing.T) {
 func TestTimezoneFailingServer(t *testing.T) {
 	server := mockServer(500, `{"status" : "ERROR"}`)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &TimezoneRequest{
 		Location: &LatLng{Lat: 36.578581, Lng: -118.291994},
 	}
@@ -112,8 +109,7 @@ func TestTimezoneRequestURL(t *testing.T) {
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
 
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.s.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 
 	r := &TimezoneRequest{
 		Location:  &LatLng{1, 2},

@@ -120,8 +120,7 @@ func TestGeocodingGoogleHQ(t *testing.T) {
 
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &GeocodingRequest{
 		Address: "1600 Amphitheatre Parkway, Mountain View, CA",
 	}
@@ -137,37 +136,37 @@ func TestGeocodingGoogleHQ(t *testing.T) {
 
 	correctResponse := GeocodingResult{
 		AddressComponents: []AddressComponent{
-			AddressComponent{
+			{
 				LongName:  "1600",
 				ShortName: "1600",
 				Types:     []string{"street_number"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Amphitheatre Pkwy",
 				ShortName: "Amphitheatre Pkwy",
 				Types:     []string{"route"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Mountain View",
 				ShortName: "Mountain View",
 				Types:     []string{"locality", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Santa Clara County",
 				ShortName: "Santa Clara County",
 				Types:     []string{"administrative_area_level_2", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "California",
 				ShortName: "CA",
 				Types:     []string{"administrative_area_level_1", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "United States",
 				ShortName: "US",
 				Types:     []string{"country", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "94043",
 				ShortName: "94043",
 				Types:     []string{"postal_code"},
@@ -303,8 +302,7 @@ func TestGeocodingReverseGeocoding(t *testing.T) {
 
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &GeocodingRequest{
 		LatLng: &LatLng{Lat: 40.714224, Lng: -73.961452},
 	}
@@ -320,42 +318,42 @@ func TestGeocodingReverseGeocoding(t *testing.T) {
 
 	correctResponse := GeocodingResult{
 		AddressComponents: []AddressComponent{
-			AddressComponent{
+			{
 				LongName:  "277",
 				ShortName: "277",
 				Types:     []string{"street_number"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Bedford Avenue",
 				ShortName: "Bedford Ave",
 				Types:     []string{"route"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Williamsburg",
 				ShortName: "Williamsburg",
 				Types:     []string{"neighborhood", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Brooklyn",
 				ShortName: "Brooklyn",
 				Types:     []string{"sublocality", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Kings",
 				ShortName: "Kings",
 				Types:     []string{"administrative_area_level_2", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "New York",
 				ShortName: "NY",
 				Types:     []string{"administrative_area_level_1", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "United States",
 				ShortName: "US",
 				Types:     []string{"country", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "11211",
 				ShortName: "11211",
 				Types:     []string{"postal_code"},
@@ -409,8 +407,7 @@ func TestGeocodingWithCancelledContext(t *testing.T) {
 func TestGeocodingFailingServer(t *testing.T) {
 	server := mockServer(500, `{"status" : "ERROR"}`)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &GeocodingRequest{
 		Address: "Sydney Town Hall",
 	}
@@ -426,8 +423,7 @@ func TestGeocodingRequestURL(t *testing.T) {
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
 
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.s.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 
 	r := &GeocodingRequest{
 		Address:      "Santa Cruz",
@@ -536,8 +532,7 @@ func TestReverseGeocodingPlaceID(t *testing.T) {
 
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &GeocodingRequest{
 		PlaceID: "ChIJ2eUgeAK6j4ARbn5u_wAGqWA",
 	}
@@ -552,37 +547,37 @@ func TestReverseGeocodingPlaceID(t *testing.T) {
 
 	correctResponse := GeocodingResult{
 		AddressComponents: []AddressComponent{
-			AddressComponent{
+			{
 				LongName:  "1600",
 				ShortName: "1600",
 				Types:     []string{"street_number"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Amphitheatre Pkwy",
 				ShortName: "Amphitheatre Pkwy",
 				Types:     []string{"route"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Mountain View",
 				ShortName: "Mountain View",
 				Types:     []string{"locality", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "Santa Clara County",
 				ShortName: "Santa Clara County",
 				Types:     []string{"administrative_area_level_2", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "California",
 				ShortName: "CA",
 				Types:     []string{"administrative_area_level_1", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "United States",
 				ShortName: "US",
 				Types:     []string{"country", "political"},
 			},
-			AddressComponent{
+			{
 				LongName:  "94043",
 				ShortName: "94043",
 				Types:     []string{"postal_code"},
@@ -613,8 +608,7 @@ func TestCustomPassThroughGeocodingURL(t *testing.T) {
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
 
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.s.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 	custom := make(url.Values)
 	custom["new_forward_geocoder"] = []string{"true"}
 
@@ -629,5 +623,28 @@ func TestCustomPassThroughGeocodingURL(t *testing.T) {
 	}
 	if server.successful != 1 {
 		t.Errorf("Got URL(s) %v, want %s", server.failed, expectedQuery)
+	}
+}
+
+func TestGeocodingZeroResults(t *testing.T) {
+	server := mockServer(200, `{"status" : "ZERO_RESULTS"}`)
+	defer server.Close()
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
+	r := &GeocodingRequest{
+		Address: "Sydney Town Hall",
+	}
+
+	response, err := c.Geocode(context.Background(), r)
+
+	if err != nil {
+		t.Errorf("Unexpected error for ZERO_RESULTS status")
+	}
+
+	if response == nil {
+		t.Errorf("Unexpected nil response for ZERO_RESULTS status")
+	}
+
+	if len(response) != 0 {
+		t.Errorf("Unexpected response for ZERO_RESULTS status")
 	}
 }

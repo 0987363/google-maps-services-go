@@ -51,8 +51,7 @@ func TestDistanceMatrixWithCoordinatesAndTraffic(t *testing.T) {
 }`
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &DistanceMatrixRequest{
 		Origins:       []string{"1.315125,103.76471334"},
 		Destinations:  []string{"1.280776,103.8487"},
@@ -68,9 +67,9 @@ func TestDistanceMatrixWithCoordinatesAndTraffic(t *testing.T) {
 		OriginAddresses:      []string{"105 Cecil St, Singapore 069534"},
 		DestinationAddresses: []string{"3150 Commonwealth Ave W, Singapore 129580"},
 		Rows: []DistanceMatrixElementsRow{
-			DistanceMatrixElementsRow{
+			{
 				Elements: []*DistanceMatrixElement{
-					&DistanceMatrixElement{
+					{
 						Status:            "OK",
 						Duration:          1083000000000,
 						DurationInTraffic: 1134000000000,
@@ -128,8 +127,7 @@ func TestDistanceMatrixSydPyrToPar(t *testing.T) {
 
 	server := mockServer(200, response)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &DistanceMatrixRequest{
 		Origins:      []string{"Sydney", "Pyrmont"},
 		Destinations: []string{"Parramatta"},
@@ -145,18 +143,18 @@ func TestDistanceMatrixSydPyrToPar(t *testing.T) {
 		OriginAddresses:      []string{"Sydney NSW, Australia", "Pyrmont NSW, Australia"},
 		DestinationAddresses: []string{"Parramatta NSW, Australia"},
 		Rows: []DistanceMatrixElementsRow{
-			DistanceMatrixElementsRow{
+			{
 				Elements: []*DistanceMatrixElement{
-					&DistanceMatrixElement{
+					{
 						Status:   "OK",
 						Duration: 2215000000000,
 						Distance: Distance{HumanReadable: "23.8 km", Meters: 23846},
 					},
 				},
 			},
-			DistanceMatrixElementsRow{
+			{
 				Elements: []*DistanceMatrixElement{
-					&DistanceMatrixElement{
+					{
 						Status:   "OK",
 						Duration: 2058000000000,
 						Distance: Distance{HumanReadable: "22.2 km", Meters: 22242},
@@ -268,8 +266,7 @@ func TestDistanceMatrixWithCancelledContext(t *testing.T) {
 func TestDistanceMatrixFailingServer(t *testing.T) {
 	server := mockServer(500, `{"status" : "ERROR"}`)
 	defer server.Close()
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &DistanceMatrixRequest{
 		Origins:      []string{"Sydney", "Pyrmont"},
 		Destinations: []string{},
@@ -286,8 +283,7 @@ func TestDistanceMatrixTransitRequestURL(t *testing.T) {
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
 
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.s.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 
 	r := &DistanceMatrixRequest{
 		Origins:                  []string{"Sydney", "Pyrmont"},
@@ -316,8 +312,7 @@ func TestDistanceMatrixTrafficRequestURL(t *testing.T) {
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
 
-	c, _ := NewClient(WithAPIKey(apiKey))
-	c.baseURL = server.s.URL
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 
 	r := &DistanceMatrixRequest{
 		Origins:       []string{"Sydney", "Pyrmont"},

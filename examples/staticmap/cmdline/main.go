@@ -24,7 +24,7 @@ import (
 
 	"github.com/kr/pretty"
 	"golang.org/x/net/context"
-	"googlemaps.github.io/maps"
+	"github.com/0987363/google-maps-services-go"
 )
 
 var (

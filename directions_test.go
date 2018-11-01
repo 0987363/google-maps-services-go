@@ -16,12 +16,16 @@ package maps
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
@@ -39,6 +43,9 @@ func mockServerForQuery(query string, code int, body string) *countingServer {
 
 	server.s = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if query != "" && r.URL.RawQuery != query {
+			dmp := diffmatchpatch.New()
+			diffs := dmp.DiffMain(query, r.URL.RawQuery, false)
+			log.Printf("Query != Expected Query: %s", dmp.DiffPrettyText(diffs))
 			server.failed = append(server.failed, r.URL.RawQuery)
 			http.Error(w, "fail", 999)
 			return
@@ -173,6 +180,7 @@ func TestDirectionsTransit(t *testing.T) {
 		EndLocation:   LatLng{Lat: -33.8785317, Lng: 151.1859855},
 		StartAddress:  "Workplace 6, 48 Pirrama Rd, Pyrmont NSW 2009, Australia",
 		EndAddress:    "Glebe Point Rd, Glebe NSW 2037, Australia",
+		ViaWaypoint:   make([]*ViaWaypoint, 0),
 	})
 
 	correctResponse := &Route{
@@ -304,6 +312,7 @@ func TestDirectionsSydneyToParramatta(t *testing.T) {
 		EndLocation:   LatLng{Lat: -33.8150985, Lng: 151.0031658},
 		StartAddress:  "Sydney NSW, Australia",
 		EndAddress:    "Parramatta NSW, Australia",
+		ViaWaypoint:   make([]*ViaWaypoint, 0),
 	})
 
 	correctResponse := &Route{
@@ -428,7 +437,7 @@ func TestDirectionsFailingServer(t *testing.T) {
 }
 
 func TestDirectionsRequestURL(t *testing.T) {
-	expectedQuery := "alternatives=true&avoid=tolls%7Cferries&destination=Parramatta&key=AIzaNotReallyAnAPIKey&language=es&mode=transit&optimize=true&origin=Sydney&region=es&transit_mode=rail&transit_routing_preference=fewer_transfers&units=imperial&waypoints=Charlestown%2CMA%7Cvia%3ALexington"
+	expectedQuery := "alternatives=true&avoid=tolls%7Cferries&destination=Parramatta&key=AIzaNotReallyAnAPIKey&language=es&mode=transit&origin=Sydney&region=es&transit_mode=rail&transit_routing_preference=fewer_transfers&units=imperial&waypoints=optimize%3Atrue%7CCharlestown%2CMA%7Cvia%3ALexington"
 
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
@@ -436,17 +445,17 @@ func TestDirectionsRequestURL(t *testing.T) {
 	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 
 	r := &DirectionsRequest{
-		Origin:       "Sydney",
-		Destination:  "Parramatta",
-		Mode:         TravelModeTransit,
-		TransitMode:  []TransitMode{TransitModeRail},
-		Waypoints:    []string{"Charlestown,MA", "via:Lexington"},
-		Alternatives: true,
-		Optimize:     true,
-		Avoid:        []Avoid{AvoidTolls, AvoidFerries},
-		Language:     "es",
-		Region:       "es",
-		Units:        UnitsImperial,
+		Origin:                   "Sydney",
+		Destination:              "Parramatta",
+		Mode:                     TravelModeTransit,
+		TransitMode:              []TransitMode{TransitModeRail},
+		Waypoints:                []string{"Charlestown,MA", "via:Lexington"},
+		Alternatives:             true,
+		Optimize:                 true,
+		Avoid:                    []Avoid{AvoidTolls, AvoidFerries},
+		Language:                 "es",
+		Region:                   "es",
+		Units:                    UnitsImperial,
 		TransitRoutingPreference: TransitRoutingPreferenceFewerTransfers,
 	}
 
@@ -680,4 +689,32 @@ func TestNoFare(t *testing.T) {
 	if resp[0].Fare != nil {
 		t.Errorf("expected %+v, was %+v", nil, resp[0].Fare)
 	}
+}
+
+// https://maps.googleapis.com/maps/api/directions/json?
+// origin=Adelaide,SA
+// &destination=Adelaide,SA
+// &waypoints=optimize:true|Barossa+Valley,SA|Clare,SA|Connawarra,SA|McLaren+Vale,SA
+// https://github.com/googlemaps/google-maps-services-go/issues/138
+func TestConstructParamsWithOptimizeFlag(t *testing.T) {
+	require := require.New(t)
+	r := new(DirectionsRequest)
+	r.Destination = "Adelaide,SA"
+	r.Origin = "Adelaide,SA"
+	r.Optimize = true
+	r.Waypoints = []string{"Barossa+Valley,SA", "Clare,SA", "Connawarra,SA", "McLaren+Vale,SA"}
+	v := r.params()
+	uri, _ := url.QueryUnescape(v.Encode())
+	require.Equal("destination=Adelaide,SA&origin=Adelaide,SA&waypoints=optimize:true|Barossa+Valley,SA|Clare,SA|Connawarra,SA|McLaren+Vale,SA", uri)
+}
+
+func TestConstructParamsWithoutOptimizeFlag(t *testing.T) {
+	require := require.New(t)
+	r := new(DirectionsRequest)
+	r.Destination = "Adelaide,SA"
+	r.Origin = "Adelaide,SA"
+	r.Waypoints = []string{"Barossa+Valley,SA", "Clare,SA", "Connawarra,SA", "McLaren+Vale,SA"}
+	v := r.params()
+	uri, _ := url.QueryUnescape(v.Encode())
+	require.Equal("destination=Adelaide,SA&origin=Adelaide,SA&waypoints=Barossa+Valley,SA|Clare,SA|Connawarra,SA|McLaren+Vale,SA", uri)
 }

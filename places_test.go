@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/net/context"
 )
 
@@ -326,7 +327,7 @@ func TestTextSearchMissingQuery(t *testing.T) {
 	r := &TextSearchRequest{}
 	_, err := c.TextSearch(context.Background(), r)
 
-	if "maps: Query and PageToken both missing" != err.Error() {
+	if "maps: Query, PageToken and Type are all missing" != err.Error() {
 		t.Errorf("Wrong error returned \"%v\"", err)
 	}
 }
@@ -415,8 +416,8 @@ func TestQueryAutocompleteMissingInput(t *testing.T) {
 }
 
 func TestPlaceAutocompleteWithStrictbounds(t *testing.T) {
-	expectedQuery := "input=Amoeba&key=AIzaNotReallyAnAPIKey&location=37.76999%2C-122.44696&radius=500&strictbounds=true&types=establishment"
-
+	session := NewPlaceAutocompleteSessionToken()
+	expectedQuery := "input=Amoeba&key=AIzaNotReallyAnAPIKey&location=37.76999%2C-122.44696&radius=500&sessiontoken=" + uuid.UUID(session).String() + "&strictbounds=true&types=establishment"
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
 
@@ -424,48 +425,47 @@ func TestPlaceAutocompleteWithStrictbounds(t *testing.T) {
 
 	r := &PlaceAutocompleteRequest{
 		Input:        "Amoeba",
-		Types:        AutocompletePlaceType("establishment"),
+		Types:        AutocompletePlaceTypeEstablishment,
 		Location:     &LatLng{37.76999, -122.44696},
 		Radius:       500,
 		StrictBounds: true,
+		SessionToken: session,
 	}
 
 	_, err := c.PlaceAutocomplete(context.Background(), r)
 
 	if err != nil {
 		t.Errorf("Unexpected error in constructing request URL: %+v", err)
-	}
-
-	if server.successful != 1 {
+	} else if server.successful != 1 {
 		t.Errorf("Got URL(s) %v, want %s", server.failed, expectedQuery)
 	}
 }
 
 func TestPlaceAutocompleteMinimalRequestURL(t *testing.T) {
-	expectedQuery := "input=quay+resteraunt+sydney&key=AIzaNotReallyAnAPIKey"
-
+	session := NewPlaceAutocompleteSessionToken()
+	expectedQuery := "input=quay+resteraunt+sydney&key=AIzaNotReallyAnAPIKey&sessiontoken=" + uuid.UUID(session).String()
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
 
 	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
 
 	r := &PlaceAutocompleteRequest{
-		Input: "quay resteraunt sydney",
+		Input:        "quay resteraunt sydney",
+		SessionToken: session,
 	}
 
 	_, err := c.PlaceAutocomplete(context.Background(), r)
 
 	if err != nil {
 		t.Errorf("Unexpected error in constructing request URL: %+v", err)
-	}
-
-	if server.successful != 1 {
+	} else if server.successful != 1 {
 		t.Errorf("Got URL(s) %v, want %s", server.failed, expectedQuery)
 	}
 }
 
 func TestPlaceAutocompleteMaximalRequestURL(t *testing.T) {
-	expectedQuery := "components=country%3AES&input=quay+resteraunt+sydney&key=AIzaNotReallyAnAPIKey&language=es&location=1%2C2&offset=5&radius=10000&types=geocode"
+	session := NewPlaceAutocompleteSessionToken()
+	expectedQuery := "components=country%3AES&input=quay+resteraunt+sydney&key=AIzaNotReallyAnAPIKey&language=es&location=1%2C2&offset=5&radius=10000&sessiontoken=" + uuid.UUID(session).String() + "&types=geocode"
 
 	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
 	defer server.s.Close()
@@ -478,22 +478,21 @@ func TestPlaceAutocompleteMaximalRequestURL(t *testing.T) {
 	}
 
 	r := &PlaceAutocompleteRequest{
-		Input:      "quay resteraunt sydney",
-		Offset:     5,
-		Location:   &LatLng{1.0, 2.0},
-		Radius:     10000,
-		Language:   "es",
-		Types:      placeType,
-		Components: map[Component]string{ComponentCountry: "ES"},
+		Input:        "quay resteraunt sydney",
+		Offset:       5,
+		Location:     &LatLng{1.0, 2.0},
+		Radius:       10000,
+		Language:     "es",
+		Types:        placeType,
+		Components:   map[Component]string{ComponentCountry: "ES"},
+		SessionToken: session,
 	}
 
 	_, err = c.PlaceAutocomplete(context.Background(), r)
 
 	if err != nil {
 		t.Errorf("Unexpected error in constructing request URL: %+v", err)
-	}
-
-	if server.successful != 1 {
+	} else if server.successful != 1 {
 		t.Errorf("Got URL(s) %v, want %s", server.failed, expectedQuery)
 	}
 }
@@ -514,6 +513,7 @@ func TestPlaceAutocompleteMissingInput(t *testing.T) {
 }
 
 func TestPlaceAutocompleteWithStructuredFormatting(t *testing.T) {
+	session := NewPlaceAutocompleteSessionToken()
 	response := `
 {
   "predictions": [
@@ -567,8 +567,9 @@ func TestPlaceAutocompleteWithStructuredFormatting(t *testing.T) {
 	defer server.Close()
 	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &PlaceAutocompleteRequest{
-		Input: "Theater de Meervaart",
-		Types: AutocompletePlaceType("establishment"),
+		Input:        "Theater de Meervaart",
+		Types:        AutocompletePlaceType("establishment"),
+		SessionToken: session,
 	}
 
 	resp, err := c.PlaceAutocomplete(context.Background(), r)
@@ -596,111 +597,6 @@ func TestPlaceAutocompleteWithStructuredFormatting(t *testing.T) {
 	mainTextSubstringOffset := 0
 	if mainTextSubstringOffset != resp.Predictions[0].StructuredFormatting.MainTextMatchedSubstrings[0].Offset {
 		t.Errorf("expected %+v, was %+v", mainTextSubstringLength, resp.Predictions[0].StructuredFormatting.MainTextMatchedSubstrings[0].Offset)
-	}
-}
-
-func TestRadarSearchMinimalRequestURL(t *testing.T) {
-	expectedQuery := "key=AIzaNotReallyAnAPIKey&keyword=Pub&location=1%2C2&radius=5000"
-
-	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
-	defer server.s.Close()
-
-	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
-
-	r := &RadarSearchRequest{
-		Location: &LatLng{1, 2},
-		Radius:   5000,
-		Keyword:  "Pub",
-	}
-
-	_, err := c.RadarSearch(context.Background(), r)
-
-	if err != nil {
-		t.Errorf("Unexpected error in constructing request URL: %+v", err)
-	}
-
-	if server.successful != 1 {
-		t.Errorf("Got URL(s) %v, want %s", server.failed, expectedQuery)
-	}
-}
-
-func TestRadarSearchMaximalRequestURL(t *testing.T) {
-	expectedQuery := "key=AIzaNotReallyAnAPIKey&keyword=Pub&location=1%2C2&maxprice=3&minprice=1&name=name&opennow=true&radius=5000&type=airport"
-
-	server := mockServerForQuery(expectedQuery, 200, `{"status":"OK"}"`)
-	defer server.s.Close()
-
-	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
-
-	r := &RadarSearchRequest{
-		Location: &LatLng{1, 2},
-		Radius:   5000,
-		Keyword:  "Pub",
-		MinPrice: PriceLevelInexpensive,
-		MaxPrice: PriceLevelExpensive,
-		Name:     "name",
-		OpenNow:  true,
-		Type:     PlaceTypeAirport,
-	}
-
-	_, err := c.RadarSearch(context.Background(), r)
-
-	if err != nil {
-		t.Errorf("Unexpected error in constructing request URL: %+v", err)
-	}
-
-	if server.successful != 1 {
-		t.Errorf("Got URL(s) %v, want %s", server.failed, expectedQuery)
-	}
-}
-
-func TestRadarSearchMissingLocation(t *testing.T) {
-	c, _ := NewClient(WithAPIKey(apiKey))
-	r := &RadarSearchRequest{}
-
-	_, err := c.RadarSearch(context.Background(), r)
-
-	if err == nil {
-		t.Errorf("Error expected: maps: Location is missing")
-	}
-
-	if "maps: Location is missing" != err.Error() {
-		t.Errorf("Wrong error returned \"%v\"", err)
-	}
-}
-
-func TestRadarSearchMissingRadius(t *testing.T) {
-	c, _ := NewClient(WithAPIKey(apiKey))
-	r := &RadarSearchRequest{
-		Location: &LatLng{1, 2},
-	}
-
-	_, err := c.RadarSearch(context.Background(), r)
-
-	if err == nil {
-		t.Errorf("Error expected: maps: Radius is missing")
-	}
-
-	if "maps: Radius is missing" != err.Error() {
-		t.Errorf("Wrong error returned \"%v\"", err)
-	}
-}
-
-func TestRadarSearchMissingKeywordNameAndType(t *testing.T) {
-	c, _ := NewClient(WithAPIKey(apiKey))
-	r := &RadarSearchRequest{
-		Location: &LatLng{1, 2},
-		Radius:   1000,
-	}
-
-	_, err := c.RadarSearch(context.Background(), r)
-
-	if err == nil {
-		t.Errorf("Error expected: maps: Keyword, Name and Type are missing")
-	}
-
-	if "maps: Keyword, Name and Type are missing" != err.Error() {
-		t.Errorf("Wrong error returned \"%v\"", err)
 	}
 }
 
@@ -759,7 +655,8 @@ func TestPlaceDetails(t *testing.T) {
                   "rating" : 1,
                   "type" : "overall"
                }
-            ],
+			],
+			"profile_photo_url": "https://lh3.googleusercontent.com/-EXtIWgDBHgs/AAAAAAAAAAI/AAAAAAAAAAA/AIcfdXCXHH76RsCp2i2B0qjO1WngDfIrQQ/s120-p-rw-no-mo/photo.jpg",
             "author_name" : "Rachel Lewis",
             "author_url" : "https://plus.google.com/114299517944848975298",
             "language" : "en",
@@ -823,6 +720,10 @@ func TestPlaceDetails(t *testing.T) {
 		t.Errorf("Expected OpenNow to be true")
 	}
 
+	if *resp.UTCOffset != 660 {
+		t.Errorf("Expected UTCOffset to be 660")
+	}
+
 	if resp.OpeningHours.Periods[0].Open.Day != time.Monday || resp.OpeningHours.Periods[0].Close.Day != time.Monday {
 		t.Errorf("OpeningHours.Periods[0].Open.Day or Close.Day incorrect")
 	}
@@ -843,6 +744,11 @@ func TestPlaceDetails(t *testing.T) {
 	authorName := "Rachel Lewis"
 	if authorName != resp.Reviews[0].AuthorName {
 		t.Errorf("expected %+v, was %+v", authorName, resp.Reviews[0].AuthorName)
+	}
+
+	authorProfilePhoto := "https://lh3.googleusercontent.com/-EXtIWgDBHgs/AAAAAAAAAAI/AAAAAAAAAAA/AIcfdXCXHH76RsCp2i2B0qjO1WngDfIrQQ/s120-p-rw-no-mo/photo.jpg"
+	if authorProfilePhoto != resp.Reviews[0].AuthorProfilePhoto {
+		t.Errorf("expected %+v, was %+v", authorProfilePhoto, resp.Reviews[0].AuthorProfilePhoto)
 	}
 
 	authorURL := "https://plus.google.com/114299517944848975298"
@@ -868,6 +774,56 @@ func TestPlaceDetails(t *testing.T) {
 	time := 1441848853
 	if time != resp.Reviews[0].Time {
 		t.Errorf("expected %+v, was %+v", time, resp.Reviews[0].Time)
+	}
+}
+
+func TestPlaceDetailsUTCOffsetAbsent(t *testing.T) {
+	response := `
+{
+   "html_attributions" : [],
+   "result" : {
+      "address_components" : [],
+      "formatted_address" : "3, Overseas Passenger Terminal, George St & Argyle Street, The Rocks NSW 2000, Australia",
+      "formatted_phone_number" : "(02) 9251 5600",
+      "geometry" : {
+         "location" : {
+            "lat" : -33.858018,
+            "lng" : 151.210091
+         }
+      },
+      "icon" : "https://maps.gstatic.com/mapfiles/place_api/icons/restaurant-71.png",
+      "international_phone_number" : "+61 2 9251 5600",
+      "name" : "Quay",
+      "place_id" : "ChIJ02qnq0KuEmsRHUJF4zo1x4I",
+      "price_level" : 4,
+      "rating" : 4.1,
+      "scope" : "GOOGLE",
+      "types" : [ "restaurant", "food", "point_of_interest", "establishment" ],
+      "url" : "https://plus.google.com/105746337161979416551/about?hl=en-US",
+      "user_ratings_total" : 275,
+      "vicinity" : "3 Overseas Passenger Terminal, George Street, The Rocks",
+      "website" : "http://www.quay.com.au/"
+   },
+   "status" : "OK"
+}
+`
+	server := mockServer(200, response)
+	defer server.Close()
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
+	placeID := "ChIJ02qnq0KuEmsRHUJF4zo1x4I"
+	r := &PlaceDetailsRequest{
+		PlaceID: placeID,
+	}
+
+	resp, err := c.PlaceDetails(context.Background(), r)
+
+	if err != nil {
+		t.Errorf("r.Get returned non nil error: %v", err)
+		return
+	}
+
+	if resp.UTCOffset != nil {
+		t.Errorf("Expected UTCOffset to be nil")
 	}
 }
 
@@ -1013,6 +969,7 @@ func TestTextSearchWithPermanentlyClosed(t *testing.T) {
 }
 
 func TestPlaceAutocompleteJsonMarshalLowerCase(t *testing.T) {
+	session := NewPlaceAutocompleteSessionToken()
 	response := `
 {
   "predictions": [
@@ -1066,8 +1023,9 @@ func TestPlaceAutocompleteJsonMarshalLowerCase(t *testing.T) {
 	defer server.Close()
 	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.URL))
 	r := &PlaceAutocompleteRequest{
-		Input: "Theater de Meervaart",
-		Types: AutocompletePlaceType("establishment"),
+		Input:        "Theater de Meervaart",
+		Types:        AutocompletePlaceType("establishment"),
+		SessionToken: session,
 	}
 
 	resp, err := c.PlaceAutocomplete(context.Background(), r)
@@ -1094,4 +1052,68 @@ func TestPlaceAutocompleteJsonMarshalLowerCase(t *testing.T) {
 	}
 
 	t.Error("TestPlaceAutocompleteJsonMarshalLowerCase error!")
+}
+
+func TestFindPlaceFromText(t *testing.T) {
+	expectedQuery := "fields=photos%2Cformatted_address%2Cname%2Copening_hours%2Crating&input=mongolian+grill&inputtype=textquery&key=AIzaNotReallyAnAPIKey&locationbias=circle%3A2000%4047.6918452%2C-122.2226413"
+	response := `	
+{
+	"candidates" : [
+	   {
+		  "formatted_address" : "9736 NE 117th Ln, Kirkland, WA 98034, USA",
+		  "name" : "Mongolian Grill Kirkland",
+		  "opening_hours" : {
+			 "open_now" : false,
+			 "weekday_text" : []
+		  },
+		  "photos" : [
+			 {
+				"height" : 2891,
+				"html_attributions" : [
+				   "\u003ca href=\"https://maps.google.com/maps/contrib/111759700246215860219/photos\"\u003eVamsi Kanamaluru\u003c/a\u003e"
+				],
+				"photo_reference" : "CmRaAAAAwzjnmCwlQAFViioiTzU3jGb1jzTnfUg3CThLhA92w9FeLvCFymiYgL3qlstXd0TngcZ45fF3mwJfPWHWKQ44rllAcC_Izp4A-euYZloBnjFAtEuKOx5gecBG5rR0CnymEhB0LxSGBDoojumIma5k6pudGhQdyUwhjplZjF1StMfaydwbGFE80Q",
+				"width" : 3175
+			 }
+		  ],
+		  "rating" : 4.2
+	   }
+	],
+	"debug_log" : {
+	   "line" : []
+	},
+	"status" : "OK"
+ }`
+	server := mockServerForQuery(expectedQuery, 200, response)
+	defer server.s.Close()
+	fields := []PlaceSearchFieldMask{PlaceSearchFieldMaskPhotos, PlaceSearchFieldMaskFormattedAddress, PlaceSearchFieldMaskName, PlaceSearchFieldMaskOpeningHours, PlaceSearchFieldMaskRating}
+
+	c, _ := NewClient(WithAPIKey(apiKey), WithBaseURL(server.s.URL))
+	r := &FindPlaceFromTextRequest{
+		Input:              "mongolian grill",
+		InputType:          FindPlaceFromTextInputTypeTextQuery,
+		Fields:             fields,
+		LocationBias:       FindPlaceFromTextLocationBiasCircular,
+		LocationBiasCenter: &LatLng{47.6918452, -122.2226413},
+		LocationBiasRadius: 2000,
+	}
+
+	resp, err := c.FindPlaceFromText(context.Background(), r)
+
+	if err != nil {
+		t.Errorf("r.Get returned non nil error: %v", err)
+		return
+	}
+
+	if 1 != len(resp.Candidates) {
+		t.Errorf("expected %+v, was %+v", 1, len(resp.Candidates))
+	}
+
+	if "9736 NE 117th Ln, Kirkland, WA 98034, USA" != resp.Candidates[0].FormattedAddress {
+		t.Errorf("expected %+v, was %+v", "9736 NE 117th Ln, Kirkland, WA 98034, USA", resp.Candidates[0].FormattedAddress)
+	}
+
+	if "Mongolian Grill Kirkland" != resp.Candidates[0].Name {
+		t.Errorf("expected %+v, was %+v", "Mongolian Grill Kirkland", resp.Candidates[0].Name)
+	}
 }

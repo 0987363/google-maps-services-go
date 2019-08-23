@@ -206,6 +206,10 @@ func (c *Client) getJSON(ctx context.Context, config *apiConfig, apiReq apiReque
 	}
 	defer httpResp.Body.Close()
 
+	if httpResp.StatusCode == http.StatusBadGateway {
+		return errors.New("StatusBadGateway")
+	}
+
 	return json.NewDecoder(httpResp.Body).Decode(resp)
 }
 
@@ -215,6 +219,10 @@ func (c *Client) postJSON(ctx context.Context, config *apiConfig, apiReq interfa
 		return err
 	}
 	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode == http.StatusBadGateway {
+		return errors.New("StatusBadGateway")
+	}
 
 	return json.NewDecoder(httpResp.Body).Decode(resp)
 }

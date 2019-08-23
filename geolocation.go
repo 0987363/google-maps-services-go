@@ -29,6 +29,15 @@ var geolocationAPI = &apiConfig{
 	acceptsClientID: true,
 }
 
+// GeolocationHost Update geolocation host
+func GeolocationHost(host string) {
+	if host == "" {
+		return
+	}
+
+	geolocationAPI.host = host
+}
+
 // Geolocate makes a Geolocation API request
 func (c *Client) Geolocate(ctx context.Context, r *GeolocationRequest) (*GeolocationResult, error) {
 	var response struct {
